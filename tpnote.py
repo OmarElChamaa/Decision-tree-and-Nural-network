@@ -28,8 +28,8 @@ plt.ylabel('Attr_L')
 """
 print(df)
 
-test = df.groupby(['Class','Attr_A'])
-test.size()
+# test = df.groupby(['Class','Attr_A'])
+# test.size()
 
 """
 maxc = df['Attr_N'].loc[df['Attr_N'].idxmax()]
@@ -60,16 +60,13 @@ occ_setosa = series . get ( ’ Iris - setosa ’)
 2. Arbre de décision
 """
 
-# def entropie_df(df):
-#     res = 0
-#     nbl = df.shape[0]
-#     maxdf = df['Class'].loc[df['Class'].idxmax()]
-#     for ind in range(maxdf+1):
-#         val = df[df.Class == ind].shape[0]/nbl
-#         res -= val * log2(val)
-#     return res    
+#split donnees 
 
-
+traindf = df.quantile(0.75)
+print(traindf)
+# testdf =    
+# print(testdf)
+#Calcul de l'entropie :|
 def entropie_df(df) : 
     nb_lignes = df.shape[0]
     series = df['Class'].value_counts()
@@ -79,10 +76,8 @@ def entropie_df(df) :
         res -= p*log2(p)
     return res 
 
-print( entropie_df(df))
-data_sorted = df.sort_values(by ='Attr_A')
-print(data_sorted)
 
+#pour calculer le gain d'un attribut :)
 def info_gain(df, a):
     sump = 0
     ent = entropie_df(df)
@@ -102,7 +97,9 @@ def info_gain(df, a):
             break
     return gain , split_value , partitions
 
-def best_attribute(df,attributes) :
+
+# pour calculer le meilleur attribut :D
+def super_gain(df,attributes) :
     max_gain = -1 
     partitions = []
     max_split = 0 
@@ -116,20 +113,29 @@ def best_attribute(df,attributes) :
             attribute = attributes[i]
     return attribute,max_gain,max_split,partitions
 
-print('\n\n\033 [1mGain : \033[0m',info_gain(df,'Attr_A')[0])
-print('\n\n\033 [1mMeilleur Gain : \033[0m',best_attribute(df,df.columns.tolist()[0:4])[0])
+print('\n\n\033[1mGain : \033[0m',info_gain(df,'Attr_A')[0])
+print('\n\n\033[1mMeilleur Gain : \033[0m \n\n',super_gain(df,df.columns.tolist()[0:14]))
+
+#d'apres ce calcul, le meilleur attribut est f avec un gaine de 0.007733553206961563 et max split est  de 488.5951205915278 !!
+
+### Construction de l'arbre :(
+
+class Node():
+    def __init__(self,split = None , attribut = None, feuille = False , filsGauche = None , filsDroit = None , pred = None) : 
+        self.split = split 
+        self.attribut = attribut
+        self.feuille = feuille
+        self.filsGauche = filsGauche
+        self.filsDroit = filsDroit 
+        self.pred = pred 
 
 
-    # nbl = shape[0]
-    # p = df[df.Class == ind].shape[0]/nbl
-    # maxdf = df['Class'].loc[df['Class'].idxmax()]
-    # for ind in range (maxdf+1):
-    #     part = df[df.Class == ind]
-    #     sump += (p/nbl)*entropie_df(part)
-    #     print(sump)
-    #     print(entropie_df(part))
-    # gain = ent - sump
-    # print(gain)
+
+# def ze_tree(df,depth,target,attributes) :
+#     attributes , gain , split , partitions = super_gain(df,attributes) 
+#     pred = df[target].value_counts()
+    
+
 
 # ent = entropie_df(df)
 # info_gain()
