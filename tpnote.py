@@ -84,7 +84,7 @@ def info_gain(df, a):
     split_value = 0 
     partitions = [None,None]
     sorted_data = df.sort_values(by = a)
-    classe = sorted_data['Class'].iloc[0]
+    classe = sorted_data["Class"].iloc[0]
     for i in range (len(sorted_data)) : 
         if sorted_data["Class"].iloc[i] != classe : 
             split_value = sorted_data[a].iloc[i]
