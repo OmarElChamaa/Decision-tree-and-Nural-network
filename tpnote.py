@@ -62,8 +62,11 @@ occ_setosa = series . get ( ’ Iris - setosa ’)
 
 #split donnees 
 
-traindf = df.quantile(0.75)
+traindf = df.quantile(0.25,interpolation='nearest')
 print(traindf)
+
+
+
 # testdf =    
 # print(testdf)
 #Calcul de l'entropie :|
@@ -76,6 +79,45 @@ def entropie_df(df) :
         res -= p*log2(p)
     return res 
 
+
+#df.quantile(0.25) et on compare avec 0.75 restant  
+#df.quantile(0.50) et on compare avec 0.5 restant 
+#df.quantile(0.75) et on compare avec 0.25 restant
+#au lieu de faire partitions 
+#entropie premnier quatile et compare au prochain 
+
+
+def row_to_index(df, quart, a):
+    for i in range (len(df)):
+        if (df.iloc[i].at[a] == quart):
+            return i
+    return -1
+
+#pour calculer le gain d'un attribut :)
+def info_gain_quart(df, a):
+    sump = 0
+    ent = entropie_df(df)
+    split_value = 0 
+    partitions = [None,None]
+    sorted_data = df.sort_values(by = a) 
+    for i in range(3): 
+        quartile = 0.25 + i*0.25
+        print(quartile)
+        quartile_val = sorted_data[a].quantile(quartile,interpolation='nearest')
+        quartile_ind = row_to_index(sorted_data, quartile_val, a)
+        partitions[0] = sorted_data.iloc[:quartile_ind]
+        partitions[1] = sorted_data.iloc[quartile_ind:]
+        print("partitions 0:", partitions[0])
+        print("partitions 1  ",i,":", partitions[1])
+        sump = 0 
+        for x in partitions :
+            sump += len(x)/len(df) * entropie_df (x)
+        gain = ent - sump 
+        break
+    return gain , split_value , partitions
+    
+
+info_gain_quart(df,'Attr_A')
 
 #pour calculer le gain d'un attribut :)
 def info_gain(df, a):
