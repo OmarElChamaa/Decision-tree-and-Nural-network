@@ -221,11 +221,6 @@ def eval_node(node, df) :
 
 def inference(node, instance):
     if node.leaf:
-        # print(node.pred
-        # print("--")
-        # print (node.pred.axes[0].array[0])
-        # print("--")
-        #print(node.pred.attrs[0])
         return node.pred , node.pred.axes[0].array[0]
     else :
         value = instance[node.attribute].tolist()[0]
@@ -237,7 +232,6 @@ def inference(node, instance):
 print("---------- inférence wouhou ------------")
 
 sample = df.sample()
-#inference(node,sample)
 eval_node(node,df)
 
 
