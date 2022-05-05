@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from math import log2
+from sklearn.model_selection import train_test_split
 
 df = pd.read_csv("synthetic.csv")
 """
@@ -26,8 +27,6 @@ ax.scatter(df['Attr_K'], df['Attr_L'])
 plt.xlabel('Attr_K')
 plt.ylabel('Attr_L')
 """
-print(df)
-
 print("Nos attributs" , df.columns.tolist()[:-1])
 
 # test = df.groupby(['Class','Attr_A'])
@@ -149,10 +148,13 @@ class Node():
         self.lbranch = lbranch
         self.rbranch = rbranch 
         self.pred = pred 
-    
-    def node_result(self, spacing):
-        for classe, value in self.pred.iteritems():
-            print(spacing,classe,value)
+    def node_result(self, spacing=''):
+        s = ''
+        for v in range(len(self.pred.values)):
+            s += ' Class ' + str(self.pred.index[v]) + ' Count: ' + str(self.pred.values[v]) + '\n' + spacing
+        return s
+
+
 
 
 def ze_tree(df, cur_depth, target, attributes, max_depth) :
@@ -180,9 +182,62 @@ def print_tree(node,spacing = ' ') :
     print_tree(node.rbranch,spacing + '-')
     return
 
-node = ze_tree(df,0,'Class',df.columns.tolist()[:-1],3)
+
+
+def node_result(self, spacing=''):
+    s = ''
+    for v in range(len(self.pred.values)):
+        s += ' Class ' + str(self.pred.index[v]) + ' Count: ' + str(self.pred.values[v]) + '\n' + spacing
+    return s
+
+    
+# self.prediction: obtenu avec l'instruction data[cible].value_counts()
+
+node = ze_tree(df,0,'Class',df.columns.tolist()[:-1],4)
 print("ok_tree")
 print_tree(node)
+
+#Permet de donner l'évaluation du node feuille selon les prédictions
+# def eval_node(node, df) :
+#     predmat = {
+#               #0  1  2  3
+#         '0' : [0, 0, 0, 0],
+#         '1' : [0, 0, 0, 0],
+#         '2' : [0, 0, 0, 0],
+#         '3' : [0, 0, 0, 0]
+#     } 
+#     confusionMatrix = pd.DataFrame(predmat)
+
+#     for i in range(100):
+#         sample = df.sample()
+#         res, cpred = inference(node, sample)
+#         label = sample['Class']
+#         confusionMatrix[label].at[cpred] += 1
+#     print(confusionMatrix)
+    
+
+
+
+def inference(node, instance):
+    if node.leaf:
+        # if (node.pred == instance): 
+        #     return 1 ,  node.pred
+        # return 0, node.pred[0]
+        return node.pred
+    else :
+        value = instance[node.attribute].tolist()[0]
+        if value < node.split :
+            return inference(node.lbranch, instance)
+        else :
+            return inference(node.rbranch, instance)
+
+print("---------- inférence wouhou ------------")
+
+
+for i in range (10):
+    instance = df.sample()
+    print (instance)    
+    print(inference(node,instance))
 # ent = entropie_df(df)
 # info_gain()
 
