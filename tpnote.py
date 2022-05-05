@@ -28,6 +28,8 @@ plt.ylabel('Attr_L')
 """
 print(df)
 
+print("Nos attributs" , df.columns.tolist()[:-1])
+
 # test = df.groupby(['Class','Attr_A'])
 # test.size()
 
@@ -60,12 +62,6 @@ occ_setosa = series . get ( ’ Iris - setosa ’)
 2. Arbre de décision
 """
 
-#split donnees 
-
-traindf = df.quantile(0.25,interpolation='nearest')
-print(traindf)
-
-
 
 # testdf =    
 # print(testdf)
@@ -94,60 +90,43 @@ def row_to_index(df, quart, a):
     return -1
 
 #pour calculer le gain d'un attribut :)
+#
 def info_gain_quart(df, a):
     sump = 0
     ent = entropie_df(df)
-    split_value = 0 
+    max_gain = 0 
+    max_split = 0
     partitions = [None,None]
+    max_partitions = [None, None]
     sorted_data = df.sort_values(by = a) 
     for i in range(3): 
         quartile = 0.25 + i*0.25
-        print(quartile)
         quartile_val = sorted_data[a].quantile(quartile,interpolation='nearest')
         quartile_ind = row_to_index(sorted_data, quartile_val, a)
         partitions[0] = sorted_data.iloc[:quartile_ind]
         partitions[1] = sorted_data.iloc[quartile_ind:]
-        print("partitions 0:", partitions[0])
-        print("partitions 1  ",i,":", partitions[1])
         sump = 0 
-        for x in partitions :
+        for x in partitions:
             sump += len(x)/len(df) * entropie_df (x)
         gain = ent - sump 
-        break
-    return gain , split_value , partitions
+        #print("Attribut ", a, ": gain = ",gain, " , split = ", quartile_val)
+        if (gain>max_gain) : 
+            max_gain = gain 
+            max_partitions = partitions
+            max_split = quartile_val
     
-
-info_gain_quart(df,'Attr_A')
-
-#pour calculer le gain d'un attribut :)
-def info_gain(df, a):
-    sump = 0
-    ent = entropie_df(df)
-    split_value = 0 
-    partitions = [None,None]
-    sorted_data = df.sort_values(by = a)
-    classe = sorted_data["Class"].iloc[0]
-    for i in range (len(sorted_data)) : 
-        if sorted_data["Class"].iloc[i] != classe : 
-            split_value = sorted_data[a].iloc[i]
-            partitions[0] = sorted_data.iloc[:i]
-            partitions[1] = sorted_data.iloc[i:]
-            sump = 0 
-            for x in partitions :
-                sump += len(x)/len(df) * entropie_df (x)
-            gain = ent - sump 
-            break
-    return gain , split_value , partitions
+    return max_gain , max_split , max_partitions
+    
 
 
 # pour calculer le meilleur attribut :D
-def super_gain(df,attributes) :
+def super_attribute(df,attributes) :
     max_gain = -1 
     partitions = []
     max_split = 0 
     attribute = ''
     for i in range (len(attributes)) :
-        gain,split,tmpPartitions = info_gain(df,attributes[i])
+        gain,split,tmpPartitions = info_gain_quart(df,attributes[i])
         if(gain>max_gain):
             max_gain = gain 
             partitions = tmpPartitions
@@ -155,30 +134,55 @@ def super_gain(df,attributes) :
             attribute = attributes[i]
     return attribute,max_gain,max_split,partitions
 
-print('\n\n\033[1mGain : \033[0m',info_gain(df,'Attr_A')[0])
-print('\n\n\033[1mMeilleur Gain : \033[0m \n\n',super_gain(df,df.columns.tolist()[0:14]))
+# print('\n\n\033[1mGain : \033[0m',info_gain_quart(df,'Attr_A')[:2])
+# print('\n\n\033[1mMeilleur Gain : \033[0m \n\n',super_attribute(df,df.columns.tolist()[:-1]))
 
-#d'apres ce calcul, le meilleur attribut est f avec un gaine de 0.007733553206961563 et max split est  de 488.5951205915278 !!
+#d'apres ce calcul, le meilleur attribut est b avec un gaine de x et max split est  de y !!
 
 ### Construction de l'arbre :(
 
 class Node():
-    def __init__(self,split = None , attribut = None, feuille = False , filsGauche = None , filsDroit = None , pred = None) : 
+    def __init__(self,split = None , attribute = None, lbranch = None , rbranch = None , pred = None, leaf = False) : 
         self.split = split 
-        self.attribut = attribut
-        self.feuille = feuille
-        self.filsGauche = filsGauche
-        self.filsDroit = filsDroit 
+        self.attribute = attribute
+        self.leaf = leaf
+        self.lbranch = lbranch
+        self.rbranch = rbranch 
         self.pred = pred 
+    
+    def node_result(self, spacing):
+        for classe, value in self.pred.iteritems():
+            print(spacing,classe,value)
 
 
-
-# def ze_tree(df,depth,target,attributes) :
-#     attributes , gain , split , partitions = super_gain(df,attributes) 
-#     pred = df[target].value_counts()
+def ze_tree(df, cur_depth, target, attributes, max_depth) :
+    attribute, gain , split , partitions = super_attribute(df,attributes) 
+    pred = df[target].value_counts()
+    if(cur_depth > max_depth or len(attributes) == 0 or gain == 0) :
+        return Node(pred = pred , leaf = True)
+    attributes.remove(attribute)
+    lbranch = ze_tree(partitions[0], cur_depth+1, target, attributes, max_depth)  
+    rbranch = ze_tree(partitions[1], cur_depth+1, target, attributes, max_depth)
+    return Node(split, attribute, lbranch, rbranch, pred)
     
 
 
+def print_tree(node,spacing = ' ') :
+    if node is None :
+        return
+    if node.leaf :
+        node.node_result(spacing)
+        return
+    print ('{}[Attribute : {} Split value :{}]'.format(spacing,node.attribute,node.split))
+    print (spacing + ' > True ')
+    print_tree(node.lbranch,spacing + '-')
+    print (spacing + ' > False ')
+    print_tree(node.rbranch,spacing + '-')
+    return
+
+node = ze_tree(df,0,'Class',df.columns.tolist()[:-1],3)
+print("ok_tree")
+print_tree(node)
 # ent = entropie_df(df)
 # info_gain()
 
