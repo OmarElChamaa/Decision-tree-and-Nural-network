@@ -133,8 +133,8 @@ def super_attribute(df,attributes) :
             attribute = attributes[i]
     return attribute,max_gain,max_split,partitions
 
-# print('\n\n\033[1mGain : \033[0m',info_gain_quart(df,'Attr_A')[:2])
-# print('\n\n\033[1mMeilleur Gain : \033[0m \n\n',super_attribute(df,df.columns.tolist()[:-1]))
+print('\n\n\033[1mGain : \033[0m',info_gain_quart(df,'Attr_A')[:2])
+print('\n\n\033[1mMeilleur Gain : \033[0m \n\n',super_attribute(df,df.columns.tolist()[:-1]))
 
 #d'apres ce calcul, le meilleur attribut est b avec un gaine de x et max split est  de y !!
 
@@ -198,32 +198,33 @@ print("ok_tree")
 print_tree(node)
 
 #Permet de donner l'évaluation du node feuille selon les prédictions
-# def eval_node(node, df) :
-#     predmat = {
-#               #0  1  2  3
-#         '0' : [0, 0, 0, 0],
-#         '1' : [0, 0, 0, 0],
-#         '2' : [0, 0, 0, 0],
-#         '3' : [0, 0, 0, 0]
-#     } 
-#     confusionMatrix = pd.DataFrame(predmat)
+def eval_node(node, df) :
+    predmat = {
+              #0  1  2  3
+        '0' : [0, 0, 0, 0],
+        '1' : [0, 0, 0, 0],
+        '2' : [0, 0, 0, 0],
+        '3' : [0, 0, 0, 0]
+    } 
+    confusionMatrix = pd.DataFrame(predmat)
 
-#     for i in range(100):
-#         sample = df.sample()
-#         res, cpred = inference(node, sample)
-#         label = sample['Class']
-#         confusionMatrix[label].at[cpred] += 1
-#     print(confusionMatrix)
+    for i in range(100):
+        sample = df.sample()
+        res , cpred=  inference(node, sample)
+        label = sample['Class']
+        confusionMatrix[label].at[cpred] += 1
+    print(confusionMatrix)
     
 
 
 
 def inference(node, instance):
     if node.leaf:
-        # if (node.pred == instance): 
-        #     return 1 ,  node.pred
-        # return 0, node.pred[0]
-        return node.pred
+        #j'essaye de recuperer la clasee de la premiere ligne, ca me pete les couilles frere 
+        #jarrive a recup 333 avec node.columns.get_loc(node.pred.iloc[0]) mais pas son putain d'index de merde 
+        print ( node.pred)
+        print ( node.pred[0])
+        return node.pred , node.columns.get_loc(node.pred.iloc[0])
     else :
         value = instance[node.attribute].tolist()[0]
         if value < node.split :
@@ -233,17 +234,8 @@ def inference(node, instance):
 
 print("---------- inférence wouhou ------------")
 
-
-for i in range (10):
-    instance = df.sample()
-    print (instance)    
-    print(inference(node,instance))
-# ent = entropie_df(df)
-# info_gain()
-
-
-
-
+print(inference(node,df))
+eval_node(node,df)
 
 
 
