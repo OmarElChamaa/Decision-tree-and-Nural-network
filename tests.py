@@ -82,7 +82,7 @@ def test_best_partitions():
    print(partitions[0])
    print(partitions[1])
 
-   if (isclose(gainlong, ent, rel_tol = 1e-10, abs_tol=0.0)):
+   if (isclose(gainlong, ent, rel_tol = 1e-10, abs_tol=0.0) and len(partitions[0]) = 5 and len (partitions[1] = 3)):
       print("**** PARTITION OK :) ****")
    else:
       print("**** PARTITION KO :( ****")
