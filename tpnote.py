@@ -17,20 +17,7 @@ from sklearn.model_selection import train_test_split
 from scipy import stats
 
 """
-fig = plt.figure()
-ax = fig.add_subplot(1,1,1)
-ax.scatter(df['Attr_K'], df['Attr_L'])
-plt.xlabel('Attr_K')
-plt.ylabel('Attr_L')
-"""
-# test = df.groupby(['Class','Attr_A'])
-# test.size()
-
-"""
-maxc = df['Attr_N'].loc[df['Attr_N'].idxmax()]
-minc = df['Attr_N'].loc[df['Attr_N'].idxmin()]
-print(minc)
-print(maxc)
+Max et min des attributs des données
 
 A : min 3.84 max 17.63
 B : min 3.73 max 16.26
@@ -47,15 +34,18 @@ L : min 6.34 max 13.34
 M : min 654.66 max 1361.13
 N : min 34.54 max 155.13
 
-Recuperer une valeur associee a une etiquette donnee
-occ_setosa = series . get ( ’ Iris - setosa ’)
 """
 
-"""
-2. Arbre de décision
-"""
+#Fonction permettant de trouver l'index d'une ligne via la valeur d'un attribut
+#Elle nous sert notamment pour passer de la valeur de quantile() à l'index pour partitionner
+def row_to_index(df, quart, a):
+    for i in range (len(df)):
+        if (df.iloc[i].at[a] == quart):
+            return i
+    return -1
 
-#Calcul de l'entropie :|
+
+#Calcul de l'entropie 
 def entropie_df(df) : 
     nb_lignes = df.shape[0]
     series = df['Class'].value_counts()
@@ -66,21 +56,7 @@ def entropie_df(df) :
     return -res 
 
 
-#df.quantile(0.25) et on compare avec 0.75 restant  
-#df.quantile(0.50) et on compare avec 0.5 restant 
-#df.quantile(0.75) et on compare avec 0.25 restant
-#au lieu de faire partitions 
-#entropie premnier quatile et compare au prochain 
-
-
-def row_to_index(df, quart, a):
-    for i in range (len(df)):
-        if (df.iloc[i].at[a] == quart):
-            return i
-    return -1
-
-#pour calculer le gain d'un attribut :)
-#
+#pour calculer le gain d'un attribut 
 def info_gain_quart(df, a):
     sump = 0
     ent = entropie_df(df)
@@ -201,7 +177,7 @@ def eval_node(node, df, samplesize) :
     samples = df.sample(samplesize, random_state = 42)
     for i in range(samplesize):
         sample = samples.iloc[i]
-        cpred=  inference(node, sample)
+        cpred=  int(inference(node, sample))
         label = int(sample[-1])
         confusionMatrix.iat[label,cpred] += 1
         nbl[label] += 1
@@ -236,23 +212,27 @@ def main_node():
     #On supprime les doublons
     df = df.drop_duplicates()
 
+    #normalisation des données
+    normalized_df=(df-df.mean())/df.std()
+    normalized_df['Class'] = df['Class']
+
     # on supprime les outliers via le calcul du zscore 
     df = df[(np.abs(stats.zscore(df)) < 2.9).all(axis=1)]
 
-    train, test = train_test_split(df, test_size=0.2)
+    train, test = train_test_split(normalized_df, test_size=0.2)
 
-    #tree_3 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],3)
-    tree_4 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],4)
-    tree_5 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],5)
-    #tree_6 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],6)
-    #tree_7 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],7)
-    #tree_8 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],8)
+    tree_3 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],3)
+    tree_4 = ze_tree(train,0,'Class',train.columns.tolist()[:-1],4)
+    tree_5 = ze_tree(train,0,'Class',train.columns.tolist()[:-1],5)
+    tree_6 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],6)
+    tree_7 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],7)
+    tree_8 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],8)
 
-    # print("Profondeur = 3")
-    # #print_tree(tree_3)
-    # eval_node(tree_3, test, 300)
-    # print("----------")
-    # print("----------")
+    print("Profondeur = 3")
+    #print_tree(tree_3)
+    eval_node(tree_3, test, 300)
+    print("----------")
+    print("----------")
     print("Profondeur = 4")
     #print_tree(tree_4)
     eval_node(tree_4, test, 300)
@@ -261,32 +241,20 @@ def main_node():
     print("Profondeur = 5")
     #print_tree(tree_5)
     eval_node(tree_5, test, 300)
-    # print("----------")
-    # print("----------")
-    # print("Profondeur = 6")
-    # #print_tree(tree_6)
-    # eval_node(tree_6,test, 300)
-    # print("----------")
-    # print("----------")
-    # print("Profondeur = 7")
-    # #print_tree(tree_7)
-    # eval_node(tree_7, test, 300)
-    # print("----------")
-    # print("----------")
-    # print("Profondeur = 8")
-    # #print_tree(tree_8)
-    # eval_node(tree_8,test, 300)
-    # print ("----------")
-    # print("----------")
-
-    #Meilleur modèle : ? entre 5 et 6 
-
-
-
-
-
-
-
-
-
-
+    print("----------")
+    print("----------")
+    print("Profondeur = 6")
+    #print_tree(tree_6)
+    eval_node(tree_6,test, 300)
+    print("----------")
+    print("----------")
+    print("Profondeur = 7")
+    #print_tree(tree_7)
+    eval_node(tree_7, test, 300)
+    print("----------")
+    print("----------")
+    print("Profondeur = 8")
+    #print_tree(tree_8)
+    eval_node(tree_8,test, 300)
+    print("----------")
+    print("----------")
