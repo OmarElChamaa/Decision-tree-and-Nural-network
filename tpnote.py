@@ -16,11 +16,6 @@ import seaborn as sns
 from math import log2
 from sklearn.model_selection import train_test_split
 
-df = pd.read_csv("synthetic.csv")
-"""
-nb0 = df['Class'].value_counts()
-print(nb0)
-"""
 """
 fig = plt.figure()
 ax = fig.add_subplot(1,1,1)
@@ -28,8 +23,6 @@ ax.scatter(df['Attr_K'], df['Attr_L'])
 plt.xlabel('Attr_K')
 plt.ylabel('Attr_L')
 """
-print("Nos attributs" , df.columns.tolist()[:-1])
-
 # test = df.groupby(['Class','Attr_A'])
 # test.size()
 
@@ -62,9 +55,6 @@ occ_setosa = series . get ( ’ Iris - setosa ’)
 2. Arbre de décision
 """
 
-
-# testdf =    
-# print(testdf)
 #Calcul de l'entropie :|
 def entropie_df(df) : 
     nb_lignes = df.shape[0]
@@ -134,11 +124,6 @@ def super_attribute(df,attributes) :
             attribute = attributes[i]
     return attribute,max_gain,max_split,partitions
 
-# print('\n\n\033[1mGain : \033[0m',info_gain_quart(df,'Attr_A')[:2])
-# print('\n\n\033[1mMeilleur Gain : \033[0m \n\n',super_attribute(df,df.columns.tolist()[:-1]))
-
-#d'apres ce calcul, le meilleur attribut est b avec un gaine de x et max split est  de y !!
-
 ### Construction de l'arbre :(
 
 class Node():
@@ -174,7 +159,8 @@ def print_tree(node,spacing = ' ') :
     if node is None :
         return
     if node.leaf :
-        node.node_result(spacing)
+        print(node.node_result(spacing))
+        #print(spacing + node.node_result(spacing))
         return
     print ('{}[Attribute : {} Split value :{}]'.format(spacing,node.attribute,node.split))
     print (spacing + ' > True ')
@@ -183,22 +169,25 @@ def print_tree(node,spacing = ' ') :
     print_tree(node.rbranch,spacing + '-')
     return
 
+#Fonction permettant d'obtenir la prédiction d'une donnée selon un arbre de décision
+#node : arbre de décision
+#instance : donnée à inférer
+def inference(node, instance):
+    if node.leaf:
+        #On retourne la classe avec la prédiction la plus haute du noeud
+        return node.pred.axes[0].array[0]
+    else :
+        value = instance[node.attribute]
+        if value < node.split :
+            return inference(node.lbranch, instance)
+        else :
+            return inference(node.rbranch, instance)
 
 
-def node_result(self, spacing=''):
-    s = ''
-    for v in range(len(self.pred.values)):
-        s += ' Class ' + str(self.pred.index[v]) + ' Count: ' + str(self.pred.values[v]) + '\n' + spacing
-    return s
-
+#Fonction permettant d'évaluer le modèle node sur un partie de df
+#On crée la matrice de confusion du modèle
+def eval_node(node, df, samplesize) :
     
-# self.prediction: obtenu avec l'instruction data[cible].value_counts()
-
-node = ze_tree(df,0,'Class',df.columns.tolist()[:-1],4)
-#print_tree(node)
-
-#Permet de donner l'évaluation du node feuille selon les prédictions
-def eval_node(node, df) :
     predmat = {
               #0  1  2  3
         '0' : [0, 0, 0, 0],
@@ -207,33 +196,91 @@ def eval_node(node, df) :
         '3' : [0, 0, 0, 0]
     } 
     confusionMatrix = pd.DataFrame(predmat)
+    nbl = [0, 0, 0, 0]
 
-    nbok = 0
-    for i in range(100):
-        sample = df.sample()
-        res , cpred=  inference(node, sample)
-        label = sample.iat[0,-1]
+    #On prend les samples linéairement pour avoir le même jeu de test pour chaque arbre
+    samples = df.sample(samplesize, random_state = 12)
+    for i in range(samplesize):
+        sample = samples.iloc[i]
+        cpred=  inference(node, sample)
+        label = int(sample[-1])
         confusionMatrix.iat[label,cpred] += 1
+        nbl[label] += 1
     print(confusionMatrix)
+
+    #Calcul des métriques pour chaque classe
+    """"
+    L’exactitude
+    """
+    for i in range(4):
+        tp = int(confusionMatrix.iat[i,i])
+        tpfn = int(confusionMatrix.iat[i,0] + confusionMatrix.iat[i,1] + confusionMatrix.iat[i,2] + confusionMatrix.iat[i,3])
+        tpfp = int(confusionMatrix.iat[0,i] + confusionMatrix.iat[1,i] + confusionMatrix.iat[2,i] + confusionMatrix.iat[3,i])
+        recall = tp/tpfn if tpfn !=0 else 0
+        precision = tp/tpfp if tpfp != 0 else 0
+        f1 = 2*(precision*recall)/(precision+recall) if precision != 0 and recall != 0 else 0
+        print (i," : recall = ", recall, "precision = ", precision, "f1 score = ", f1)
+    
+        
+    nok = 0
+    for i in range (confusionMatrix.columns.size):
+        nok += confusionMatrix.iat[i,i]
+    print("prédictions correctes : ", nok, "/", samplesize)
+    print("prédiction de 0 : ",confusionMatrix.iat[0,0]*100/nbl[0] ,"%",  confusionMatrix.iat[0,0], "/",nbl[0])
+    print("prédiction de 1 : ",confusionMatrix.iat[1,1]*100/nbl[1] ,"%",  confusionMatrix.iat[1,1], "/",nbl[1])
+    print("prédiction de 2 : ",confusionMatrix.iat[2,2]*100/nbl[2] ,"%",  confusionMatrix.iat[2,2], "/",nbl[2])
+    print("prédiction de 3 : ",confusionMatrix.iat[3,3]*100/nbl[3] ,"%",  confusionMatrix.iat[3,3], "/",nbl[3])
     return 
 
 
+def main():
 
-def inference(node, instance):
-    if node.leaf:
-        return node.pred , node.pred.axes[0].array[0]
-    else :
-        value = instance[node.attribute].tolist()[0]
-        if value < node.split :
-            return inference(node.lbranch, instance)
-        else :
-            return inference(node.rbranch, instance)
+    df = pd.read_csv("synthetic.csv")
 
-print("---------- inférence wouhou ------------")
+    #On supprime les doublons
+    df.drop_duplicates()
 
-sample = df.sample()
-eval_node(node,df)
+    train, test = train_test_split(df, test_size=0.2)
 
+    tree_3 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],3)
+    tree_4 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],4)
+    tree_5 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],5)
+    tree_6 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],6)
+    tree_7 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],7)
+    tree_8 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],8)
+
+    print("Profondeur = 3")
+    #print_tree(tree_3)
+    eval_node(tree_3, test, 300)
+    print("----------")
+    print("----------")
+    print("Profondeur = 4")
+    #print_tree(tree_4)
+    eval_node(tree_4, test, 300)
+    print("----------")
+    print("----------")
+    print("Profondeur = 5")
+    #print_tree(tree_5)
+    eval_node(tree_5, test, 300)
+    print("----------")
+    print("----------")
+    print("Profondeur = 6")
+    #print_tree(tree_6)
+    eval_node(tree_6,test, 300)
+    print("----------")
+    print("----------")
+    print("Profondeur = 7")
+    #print_tree(tree_7)
+    eval_node(tree_7, test, 300)
+    print("----------")
+    print("----------")
+    print("Profondeur = 8")
+    #print_tree(tree_8)
+    eval_node(tree_8,test, 300)
+    print ("----------")
+    print("----------")
+
+    #Meilleur modèle : 7 et 6 de profondeur, meme si large marge d'erreur
 
 
 

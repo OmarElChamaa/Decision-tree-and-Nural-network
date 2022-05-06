@@ -7,15 +7,16 @@ import numpy as np
 import scipy.stats as sp
 from tpnote import *
 
-df = pd.read_csv("synthetic.csv")
+main()
 
-def test_entropie():
-    counts = df['Class'].value_counts()
-    print("Entropie with scipy " , sp.entropy(counts))
-    print("Notre entropie", entropie_df(df))
-    print(":D")    
 
-test_entropie()
+#def test_entropie():
+#    counts = df['Class'].value_counts()
+ #   print("Entropie with scipy " , sp.entropy(counts))
+  #  print("Notre entropie", entropie_df(df))
+   # print(":D")    
+
+#test_entropie()
 # def test_best_partitions(df):
     
 
