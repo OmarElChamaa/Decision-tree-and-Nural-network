@@ -5,7 +5,6 @@ Created on Tue Apr 26 15:04:24 2022
 
 @author: chebblidisdier
 
-
 Partie 1 : Préparation des données
 """
 from tkinter.messagebox import RETRY
@@ -15,6 +14,7 @@ import pandas as pd
 import seaborn as sns
 from math import log2
 from sklearn.model_selection import train_test_split
+from scipy import stats
 
 """
 fig = plt.figure()
@@ -62,8 +62,8 @@ def entropie_df(df) :
     res = 0 
     for i in series :
         p = i/nb_lignes
-        res -= p*log2(p)
-    return res 
+        res += p*log2(p)
+    return -res 
 
 
 #df.quantile(0.25) et on compare avec 0.75 restant  
@@ -124,8 +124,7 @@ def super_attribute(df,attributes) :
             attribute = attributes[i]
     return attribute,max_gain,max_split,partitions
 
-### Construction de l'arbre :(
-
+### Construction de l'arbre 
 class Node():
     def __init__(self,split = None , attribute = None, lbranch = None , rbranch = None , pred = None, leaf = False) : 
         self.split = split 
@@ -145,7 +144,7 @@ class Node():
 
 def ze_tree(df, cur_depth, target, attributes, max_depth) :
     attribute, gain , split , partitions = super_attribute(df,attributes) 
-    pred = df[target].value_counts()
+    pred = df[target].value_counts()    
     if(cur_depth > max_depth or len(attributes) == 0 or gain == 0) :
         return Node(pred = pred , leaf = True)
     attributes.remove(attribute)
@@ -209,9 +208,6 @@ def eval_node(node, df, samplesize) :
     print(confusionMatrix)
 
     #Calcul des métriques pour chaque classe
-    """"
-    L’exactitude
-    """
     for i in range(4):
         tp = int(confusionMatrix.iat[i,i])
         tpfn = int(confusionMatrix.iat[i,0] + confusionMatrix.iat[i,1] + confusionMatrix.iat[i,2] + confusionMatrix.iat[i,3])
@@ -219,13 +215,13 @@ def eval_node(node, df, samplesize) :
         recall = tp/tpfn if tpfn !=0 else 0
         precision = tp/tpfp if tpfp != 0 else 0
         f1 = 2*(precision*recall)/(precision+recall) if precision != 0 and recall != 0 else 0
-        print(i," : recall = {:6.2f}".format(recall), "precision ={:6.2f}".format(precision), "f1 score = {:6.2f}".format(f1))
-    
+        accurracy = tp/samplesize
+        print(i," : accuracy = {:6.2f}".format(accurracy),", recall = {:6.2f}".format(recall), "precision ={:6.2f}".format(precision), "f1 score = {:6.2f}".format(f1))
         
     nok = 0
     for i in range (confusionMatrix.columns.size):
         nok += confusionMatrix.iat[i,i]
-    print("prédictions correctes : ", nok, "/", samplesize)
+    print("prédictions ok : {:6.2f}".format(nok*100/samplesize),"(", nok, "/", samplesize,")")
     print("prédiction de 0 : {:6.2f}".format(confusionMatrix.iat[0,0]*100/nbl[0]) ,"% (",  confusionMatrix.iat[0,0], "/",nbl[0], ")")
     print("prédiction de 1 : {:6.2f}".format(confusionMatrix.iat[1,1]*100/nbl[1]) ,"% (",  confusionMatrix.iat[1,1], "/",nbl[1], ")")
     print("prédiction de 2 : {:6.2f}".format(confusionMatrix.iat[2,2]*100/nbl[2]) ,"% (",  confusionMatrix.iat[2,2], "/",nbl[2], ")")
@@ -238,22 +234,25 @@ def main_node():
     df = pd.read_csv("synthetic.csv")
 
     #On supprime les doublons
-    df.drop_duplicates()
+    df = df.drop_duplicates()
+
+    # on supprime les outliers via le calcul du zscore 
+    df = df[(np.abs(stats.zscore(df)) < 2.9).all(axis=1)]
 
     train, test = train_test_split(df, test_size=0.2)
 
-    tree_3 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],3)
+    #tree_3 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],3)
     tree_4 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],4)
     tree_5 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],5)
-    tree_6 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],6)
-    tree_7 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],7)
-    tree_8 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],8)
+    #tree_6 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],6)
+    #tree_7 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],7)
+    #tree_8 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],8)
 
-    print("Profondeur = 3")
-    #print_tree(tree_3)
-    eval_node(tree_3, test, 300)
-    print("----------")
-    print("----------")
+    # print("Profondeur = 3")
+    # #print_tree(tree_3)
+    # eval_node(tree_3, test, 300)
+    # print("----------")
+    # print("----------")
     print("Profondeur = 4")
     #print_tree(tree_4)
     eval_node(tree_4, test, 300)
@@ -262,25 +261,25 @@ def main_node():
     print("Profondeur = 5")
     #print_tree(tree_5)
     eval_node(tree_5, test, 300)
-    print("----------")
-    print("----------")
-    print("Profondeur = 6")
-    #print_tree(tree_6)
-    eval_node(tree_6,test, 300)
-    print("----------")
-    print("----------")
-    print("Profondeur = 7")
-    #print_tree(tree_7)
-    eval_node(tree_7, test, 300)
-    print("----------")
-    print("----------")
-    print("Profondeur = 8")
-    #print_tree(tree_8)
-    eval_node(tree_8,test, 300)
-    print ("----------")
-    print("----------")
+    # print("----------")
+    # print("----------")
+    # print("Profondeur = 6")
+    # #print_tree(tree_6)
+    # eval_node(tree_6,test, 300)
+    # print("----------")
+    # print("----------")
+    # print("Profondeur = 7")
+    # #print_tree(tree_7)
+    # eval_node(tree_7, test, 300)
+    # print("----------")
+    # print("----------")
+    # print("Profondeur = 8")
+    # #print_tree(tree_8)
+    # eval_node(tree_8,test, 300)
+    # print ("----------")
+    # print("----------")
 
-    #Meilleur modèle : 7 et 6 de profondeur, meme si large marge d'erreur
+    #Meilleur modèle : ? entre 5 et 6 
 
 
 
