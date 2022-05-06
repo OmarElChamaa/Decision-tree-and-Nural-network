@@ -199,7 +199,7 @@ def eval_node(node, df, samplesize) :
     nbl = [0, 0, 0, 0]
 
     #On prend les samples linéairement pour avoir le même jeu de test pour chaque arbre
-    samples = df.sample(samplesize, random_state = 12)
+    samples = df.sample(samplesize, random_state = 42)
     for i in range(samplesize):
         sample = samples.iloc[i]
         cpred=  inference(node, sample)
@@ -219,21 +219,21 @@ def eval_node(node, df, samplesize) :
         recall = tp/tpfn if tpfn !=0 else 0
         precision = tp/tpfp if tpfp != 0 else 0
         f1 = 2*(precision*recall)/(precision+recall) if precision != 0 and recall != 0 else 0
-        print (i," : recall = ", recall, "precision = ", precision, "f1 score = ", f1)
+        print(i," : recall = {:6.2f}".format(recall), "precision ={:6.2f}".format(precision), "f1 score = {:6.2f}".format(f1))
     
         
     nok = 0
     for i in range (confusionMatrix.columns.size):
         nok += confusionMatrix.iat[i,i]
     print("prédictions correctes : ", nok, "/", samplesize)
-    print("prédiction de 0 : ",confusionMatrix.iat[0,0]*100/nbl[0] ,"%",  confusionMatrix.iat[0,0], "/",nbl[0])
-    print("prédiction de 1 : ",confusionMatrix.iat[1,1]*100/nbl[1] ,"%",  confusionMatrix.iat[1,1], "/",nbl[1])
-    print("prédiction de 2 : ",confusionMatrix.iat[2,2]*100/nbl[2] ,"%",  confusionMatrix.iat[2,2], "/",nbl[2])
-    print("prédiction de 3 : ",confusionMatrix.iat[3,3]*100/nbl[3] ,"%",  confusionMatrix.iat[3,3], "/",nbl[3])
+    print("prédiction de 0 : {:6.2f}".format(confusionMatrix.iat[0,0]*100/nbl[0]) ,"% (",  confusionMatrix.iat[0,0], "/",nbl[0], ")")
+    print("prédiction de 1 : {:6.2f}".format(confusionMatrix.iat[1,1]*100/nbl[1]) ,"% (",  confusionMatrix.iat[1,1], "/",nbl[1], ")")
+    print("prédiction de 2 : {:6.2f}".format(confusionMatrix.iat[2,2]*100/nbl[2]) ,"% (",  confusionMatrix.iat[2,2], "/",nbl[2], ")")
+    print("prédiction de 3 : {:6.2f}".format(confusionMatrix.iat[3,3]*100/nbl[3]) ,"% (",  confusionMatrix.iat[3,3], "/",nbl[3], ")")
     return 
 
 
-def main():
+def main_node():
 
     df = pd.read_csv("synthetic.csv")
 

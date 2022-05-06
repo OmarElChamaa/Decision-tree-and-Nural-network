@@ -7,7 +7,7 @@ import numpy as np
 import scipy.stats as sp
 from tpnote import *
 
-main()
+main_node()
 
 
 #def test_entropie():
