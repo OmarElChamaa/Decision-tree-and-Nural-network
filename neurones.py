@@ -74,13 +74,13 @@ class NeuralNet:
         for i in range(0,len(X)):
             print("i is ", 0)
             trans = X[i:i+1].to_numpy().transpose()
-            print("Trans -----------------\n",trans)
+            print("Trans ----------------- au debut \n",trans)
             for j in range(0,self.n_layers+1):
                 print("len weights",len(self.weights[j]))
                 Z = np.matmul(self.weights[j],trans)
                 np.add(Z, self.bias[j])
                 print("Z ------------------\n",Z)
-                if(j != self.n_layers+1):
+                if(j < self.n_layers):
                     print("j is ",j)
                     if(act_f == 1) :
                         #A
@@ -88,25 +88,28 @@ class NeuralNet:
                         print("Z ------------------ after sigmoid\n",Z)
                     else:
                         #A
-                        Z = Utility.thanh(Z)
-                        print("Z ------------------ after thanh\n",Z)
+                        Z = Utility.tanh(Z)
+                        print("Z ------------------ after tanh\n",Z)
                     
                     self.error[j] = Z[1]
-                    print("error ------------------ error\n", self.error[j] )
+                    self.activation_matrix[j] = Z[0]
+                    print("error ------------------ error\n", self.error[j] ) 
+                    trans = Z[0]
                 else:
 
                     Z = Utility.softmax(Z)
                     print("Z ------------------ after softmax\n",Z)
                     #trans = Y
-            
-                trans = Z[0]
-                print("last trans \n",trans)
+                    self.activation_matrix[j] = Z                   
+                    trans = max(Z)
+                    self.outputs = Z
 
             #CE = trans - y[i:i+1].to_numpy().transpose()
-            print("Y  -------------------------------- \n",y[i:i+1])
-            print(" Trans ------------------- \n",trans)
-            cross_entropy = Utility.cross_entropy_cost(trans,y[i:i+1])
+            print("Y  -------------------------------- \n",y[i:i+1].to_numpy().transpose())
+            print(" Trans ------------------- fin  \n",trans)
+            cross_entropy = Utility.cross_entropy_cost(self.activation_matrix[-1],y[i:i+1].to_numpy().transpose())
             print("cross entropy ------------------ ",cross_entropy)
+            
 
 #est.forward_prop(X_train,y_train)
 def main_nn():
@@ -129,13 +132,14 @@ def main_nn():
 
     X_train, X_test, y_train, y_test = train_test_split(X, yd, test_size=0.15)
     print("ytrain : ", y_train)
-    #test = NeuralNet(X_train, y_train, X_test, y_test,hidden_layer_sizes=(10,8,6))
+    test = NeuralNet(X_train, y_train, X_test, y_test,hidden_layer_sizes=(10,8,6))
     df = pd.read_csv("./predictions/y_pred_NN_relu_10-8-6.csv")
-    Z = Utility.softmax(df)
-    print("softmax \n",Z)
-    #test = test.forward(X_train,y_train,1)
-    #print("test forward -------------------------- outputs ,activation, error, ",test.outputs,activation
-    # ,test.error)
+    # Z = Utility.softmax(df)
+    # print("softmax \n",Z)
+    test.forward(X_train,y_train,1)
+    print("test forward -------------------------- error, ",test.error)
+    print("activation ------------------------------ ",test.activation_matrix)
+    print("Outputs ================================== ", test.outputs)
 
 
 
