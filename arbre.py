@@ -3,7 +3,7 @@
 """
 Created on Tue Apr 26 15:04:24 2022
 
-@author: chebblidisdier
+@author: chebblidisdier et el chamaa
 
 Partie 1 : Préparation des données
 """
@@ -157,104 +157,3 @@ def inference(node, instance):
             return inference(node.lbranch, instance)
         else :
             return inference(node.rbranch, instance)
-
-
-#Fonction permettant d'évaluer le modèle node sur un partie de df
-#On crée la matrice de confusion du modèle
-def eval_node(node, df, samplesize) :
-    
-    predmat = {
-              #0  1  2  3
-        '0' : [0, 0, 0, 0],
-        '1' : [0, 0, 0, 0],
-        '2' : [0, 0, 0, 0],
-        '3' : [0, 0, 0, 0]
-    } 
-    confusionMatrix = pd.DataFrame(predmat)
-    nbl = [0, 0, 0, 0]
-
-    #On prend les samples linéairement pour avoir le même jeu de test pour chaque arbre
-    samples = df.sample(samplesize, random_state = 42)
-    for i in range(samplesize):
-        sample = samples.iloc[i]
-        cpred=  int(inference(node, sample))
-        label = int(sample[-1])
-        confusionMatrix.iat[label,cpred] += 1
-        nbl[label] += 1
-    print(confusionMatrix)
-
-    #Calcul des métriques pour chaque classe
-    for i in range(4):
-        tp = int(confusionMatrix.iat[i,i])
-        tpfn = int(confusionMatrix.iat[i,0] + confusionMatrix.iat[i,1] + confusionMatrix.iat[i,2] + confusionMatrix.iat[i,3])
-        tpfp = int(confusionMatrix.iat[0,i] + confusionMatrix.iat[1,i] + confusionMatrix.iat[2,i] + confusionMatrix.iat[3,i])
-        recall = tp/tpfn if tpfn !=0 else 0
-        precision = tp/tpfp if tpfp != 0 else 0
-        f1 = 2*(precision*recall)/(precision+recall) if precision != 0 and recall != 0 else 0
-        accurracy = tp/samplesize
-        print(i," : accuracy = {:6.2f}".format(accurracy),", recall = {:6.2f}".format(recall), "precision ={:6.2f}".format(precision), "f1 score = {:6.2f}".format(f1))
-        
-    nok = 0
-    for i in range (confusionMatrix.columns.size):
-        nok += confusionMatrix.iat[i,i]
-    print("prédictions ok : {:6.2f}".format(nok*100/samplesize),"(", nok, "/", samplesize,")")
-    print("prédiction de 0 : {:6.2f}".format(confusionMatrix.iat[0,0]*100/nbl[0]) ,"% (",  confusionMatrix.iat[0,0], "/",nbl[0], ")")
-    print("prédiction de 1 : {:6.2f}".format(confusionMatrix.iat[1,1]*100/nbl[1]) ,"% (",  confusionMatrix.iat[1,1], "/",nbl[1], ")")
-    print("prédiction de 2 : {:6.2f}".format(confusionMatrix.iat[2,2]*100/nbl[2]) ,"% (",  confusionMatrix.iat[2,2], "/",nbl[2], ")")
-    print("prédiction de 3 : {:6.2f}".format(confusionMatrix.iat[3,3]*100/nbl[3]) ,"% (",  confusionMatrix.iat[3,3], "/",nbl[3], ")")
-    return 
-
-
-def main_node():
-
-    df = pd.read_csv("synthetic.csv")
-
-    #On supprime les doublons
-    df = df.drop_duplicates()
-
-    #normalisation des données
-    normalized_df=(df-df.mean())/df.std()
-    normalized_df['Class'] = df['Class']
-
-    # on supprime les outliers via le calcul du zscore 
-    df = df[(np.abs(stats.zscore(df)) < 2.9).all(axis=1)]
-
-    train, test = train_test_split(normalized_df, test_size=0.2)
-
-    tree_3 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],3)
-    tree_4 = ze_tree(train,0,'Class',train.columns.tolist()[:-1],4)
-    tree_5 = ze_tree(train,0,'Class',train.columns.tolist()[:-1],5)
-    tree_6 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],6)
-    tree_7 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],7)
-    tree_8 = ze_tree(train,0,'Class',df.columns.tolist()[:-1],8)
-
-    print("Profondeur = 3")
-    #print_tree(tree_3)
-    eval_node(tree_3, test, 300)
-    print("----------")
-    print("----------")
-    print("Profondeur = 4")
-    #print_tree(tree_4)
-    eval_node(tree_4, test, 300)
-    print("----------")
-    print("----------")
-    print("Profondeur = 5")
-    #print_tree(tree_5)
-    eval_node(tree_5, test, 300)
-    print("----------")
-    print("----------")
-    print("Profondeur = 6")
-    #print_tree(tree_6)
-    eval_node(tree_6,test, 300)
-    print("----------")
-    print("----------")
-    print("Profondeur = 7")
-    #print_tree(tree_7)
-    eval_node(tree_7, test, 300)
-    print("----------")
-    print("----------")
-    print("Profondeur = 8")
-    #print_tree(tree_8)
-    eval_node(tree_8,test, 300)
-    print("----------")
-    print("----------")
